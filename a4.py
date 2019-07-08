@@ -2,6 +2,7 @@
 CMPT310: a4.py
 Eric Huang
 """
+import random
 
 class TicTacToe:
     def __init__(self, boardState):
@@ -61,33 +62,89 @@ class TicTacToe:
 
     def checkCompWin(self):
         """Used by AI to determine the game outcome when deciding moves.
-        Returns 0 on AI wins, 1 on AI losses and 2 on tie games."""
+        Returns 0 if game is not over yet, 1 on AI wins, 2 on AI losses, and 3 on tie games."""
         board = self.boardState
         AI = 2  #Computer's Player Token
         #Horizontal
         for i in range(3):
             if (board[i*3] == board[i*3+1] == board[i*3+2] and board[i*3] != 0):
                 if (board[i*3] == AI):
-                    return 0
-                else: return 1
+                    return 1
+                else: return 2
         #Vertical
         for i in range(3):
             if (board[i] == board[i+3] == board[i+6] and board[i] != 0):
                 if(board[i] == AI):
-                    return 0
-                else: return 1
+                    return 1
+                else: return 2
         #Diagonal
         if (board[0] == board[4] == board[8] and board[0] != 0):
             if (board[0] == AI):
-                return 0
-            else: return 1
+                return 1
+            else: return 2
         elif (board[2] == board[4] == board[6] and board[2] != 0):
             if (board[2] == AI):
-                return 0
-            else: return 1
+                return 1
+            else: return 2
         #Ties
         if (board.count(0) == 0):
-            return 2
+            return 3
+        #Game still not decided yet
+        else: return 0 
+
+def AIMove(game):
+    """Computer makes it's move using Monte-Carlo Tree Search"""
+    #Make a list of all legal moves
+    legalMoves = {}
+    for i in range(game.board):
+        if (game.boardState[i] == 0):
+            legalMoves[i] = 0
+    
+    #Do random playouts for each of the legal moves to determine the optimal move
+    numPlayouts = 100
+    win = 3
+    tie = 1
+    lose = -1
+    copyGame = game
+    for move in legalMoves:
+        copyGame.move(AI, move)     #TODO: check this line for correctness later
+        movesLeft = []
+        for i in range(len(legalMoves)):
+            movesLeft.append(legalMoves[i]) #TODO: check this too
+        movesLeft.remove(move)
+
+        for j in range(0, numPlayouts):
+            gameOver = True
+            turn = 1
+            while (not gameOver):
+                if (turn % 2 == 1):
+                    #random human choice
+                    randomHuman = random.choice(movesLeft)
+                    copyGame.move(1, randomHuman)
+                    movesLeft.remove(randomHuman)
+                else:
+                    #random AI choice
+                    randomAI = random.choice(movesLeft)
+                    copyGame.move(2, randomAI)
+                    movesLeft.remove(randomAI)
+                #check if game over
+                gameState = copyGame.checkCompWin()
+                if (gameState == 0)
+                    turn += 1
+                else:
+                    #TODO: check this too
+                    if (gameState == 1): legalMoves[move] += win
+                    elif (gameState == 2): legalMoves[move] += lose
+                    else: legalMoves[move] += tie
+
+    #Choose the optimal move
+    #TODO: THIS IS JUST PSEUDO CODE FOR NOW
+    bestMove = 0
+    bestValue = 0
+    for move in legalMoves:
+        if (legalMoves[move] > bestValue):
+            bestMove = move
+    return bestMove
 
 def askPlayerForMove(game, player):
     while (True):
@@ -95,7 +152,7 @@ def askPlayerForMove(game, player):
         if (game.move(player, int(place)) == True):
             return
         else:
-            print("Sorry that was an illegal move. Please try again.")
+            print("Sorry, that was an illegal move. Please try again.")
 
 def game():
     gameOver = False
@@ -103,11 +160,12 @@ def game():
     startingBoard = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     game = TicTacToe(startingBoard)
     game.drawBoard()
-    while (gameOver == False):
+    while (not gameOver):
         askPlayerForMove(game, player)
 
         if (game.checkWin() == True):
         #Check for if game ended
+            game.drawBoard()
             gameOver = True
         else:
             #Swap Player's Turns
