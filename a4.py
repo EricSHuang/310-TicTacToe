@@ -62,6 +62,7 @@ class TicTacToe:
             return True
         #Ties
         if (board.count(0) == 0):
+            print("Tie Game.")
             return True
         #Game still not decided yet
         else: return False
@@ -108,14 +109,15 @@ def AIMove(game):
             legalMoves[i] = 0
             movesArr.append(i)
 
-    #Do random playouts for each of the legal moves to determine the optimal move
-    copyGame = copy.deepcopy(game)
-    numPlayouts = 1000
-    AIToken = 2
-    win = 3
-    tie = 0
-    lose = -1
 
+    copyGame = copy.deepcopy(game)
+    #Heuristic Values
+    numPlayouts = 2500
+    AIToken = 2
+    win = 5
+    tie = 4
+    lose = -5
+    #Do random playouts for each of the legal moves to determine the optimal move
     for move in legalMoves:
         moveGame = copy.deepcopy(copyGame)
         #print("-----------MOVE: %d---------" %(move))
@@ -201,6 +203,12 @@ def game():
     game = TicTacToe(startingBoard)
     game.drawBoard()
     while (not gameOver):
+        #Check for if game ended
+        if (game.checkWin(player)):
+            print("check")
+            gameOver = True
+            break
+
         if (player == 1):
             askPlayerForMove(game, player)
             player = 2
@@ -209,11 +217,6 @@ def game():
             AIMove(game)
             player = 1
         game.drawBoard()
-
-        #Check for if game ended
-        if (game.checkWin(player)):
-            print("check")
-            gameOver = True
 
 
 if __name__ == '__main__':
