@@ -3,9 +3,14 @@ CMPT310: a4.py
 Eric Huang
 """
 import random
+import copy #For deepcopy in AIMove()
+import operator #For finding max in a dictionary in AIMove()
 
 class TicTacToe:
     def __init__(self, boardState):
+        self.boardState = boardState
+
+    def setBoardState(self, boardState):
         self.boardState = boardState
 
     def convert(num):
@@ -33,11 +38,11 @@ class TicTacToe:
             self.boardState[place] = player
             return True
 
-    def checkWin(self):
+    def checkWin(self, player):
         """Used at game runtime for checking which player won.
         Returns True if a player has won, False otherwise."""
         board = self.boardState
-        victoryMsg = "Player %d Won!" %(board[0])
+        victoryMsg = "Player %d Won!" %(player)
         #Horizontal Win
         for i in range(3):
             if (board[i*3] == board[i*3+1] == board[i*3+2] and board[i*3] != 0):
@@ -52,13 +57,14 @@ class TicTacToe:
         if (board[0] == board[4] == board[8] and board[0] != 0):
             print(victoryMsg)
             return True
-        elif (board[2] == board[4] == board[6] and board[2] != 0):
+        if (board[2] == board[4] == board[6] and board[2] != 0):
             print(victoryMsg)
             return True
-        else: return False
         #Ties
         if (board.count(0) == 0):
             return True
+        #Game still not decided yet
+        else: return False
 
     def checkCompWin(self):
         """Used by AI to determine the game outcome when deciding moves.
@@ -90,61 +96,95 @@ class TicTacToe:
         if (board.count(0) == 0):
             return 3
         #Game still not decided yet
-        else: return 0 
+        else: return 0
 
 def AIMove(game):
-    """Computer makes it's move using Monte-Carlo Tree Search"""
+    """Computer makes its move using Monte-Carlo Tree Search"""
     #Make a list of all legal moves
     legalMoves = {}
-    for i in range(game.board):
+    movesArr = []       #TODO: figure out if alg is do-able without this variable
+    for i in range(len(game.boardState)):
         if (game.boardState[i] == 0):
             legalMoves[i] = 0
-    
-    #Do random playouts for each of the legal moves to determine the optimal move
-    numPlayouts = 100
-    win = 3
-    tie = 1
-    lose = -1
-    copyGame = game
-    for move in legalMoves:
-        copyGame.move(AI, move)     #TODO: check this line for correctness later
-        movesLeft = []
-        for i in range(len(legalMoves)):
-            movesLeft.append(legalMoves[i]) #TODO: check this too
-        movesLeft.remove(move)
+            movesArr.append(i)
 
-        for j in range(0, numPlayouts):
-            gameOver = True
+    #Do random playouts for each of the legal moves to determine the optimal move
+    copyGame = copy.deepcopy(game)
+    numPlayouts = 1000
+    AIToken = 2
+    win = 3
+    tie = 0
+    lose = -1
+
+    for move in legalMoves:
+        moveGame = copy.deepcopy(copyGame)
+        #print("-----------MOVE: %d---------" %(move))
+        moveGame.move(AIToken, move)     #TODO: check this line for correctness later
+        tempMoves1 = copy.deepcopy(movesArr)   #TODO: think of better name for this var
+        tempMoves1.remove(move)
+
+        for i in range(0, numPlayouts):
+            randomGame = copy.deepcopy(moveGame)
+            """
+            print(moveGame.boardState)
+            print("random: ")
+            randomGame.drawBoard()
+            print("move:")
+            moveGame.drawBoard()
+            print("copy: ")
+            copyGame.drawBoard()
+            print("original: ")
+            game.drawBoard()
+            """
+            tempMoves = copy.deepcopy(tempMoves1)
+            testGameOver = False
             turn = 1
-            while (not gameOver):
+            while (testGameOver == False):
                 if (turn % 2 == 1):
                     #random human choice
-                    randomHuman = random.choice(movesLeft)
-                    copyGame.move(1, randomHuman)
-                    movesLeft.remove(randomHuman)
+                    randomHuman = random.choice(tempMoves)
+                    randomGame.move(1, randomHuman)
+                    tempMoves.remove(randomHuman)
                 else:
                     #random AI choice
-                    randomAI = random.choice(movesLeft)
-                    copyGame.move(2, randomAI)
-                    movesLeft.remove(randomAI)
-                #check if game over
-                gameState = copyGame.checkCompWin()
-                if (gameState == 0)
+                    randomAI = random.choice(tempMoves)
+                    randomGame.move(2, randomAI)
+                    tempMoves.remove(randomAI)
+
+                #check if game is over
+                gameState = randomGame.checkCompWin()
+                #print("gameState: %d" %(gameState))
+                #randomGame.drawBoard()
+                #print(tempMoves)
+                if (gameState == 0):
                     turn += 1
                 else:
                     #TODO: check this too
                     if (gameState == 1): legalMoves[move] += win
                     elif (gameState == 2): legalMoves[move] += lose
                     else: legalMoves[move] += tie
+                    #print("got here \n")
+                    testGameOver = True
+                    break
 
+    print(legalMoves)
     #Choose the optimal move
     #TODO: THIS IS JUST PSEUDO CODE FOR NOW
+    """
     bestMove = 0
-    bestValue = 0
+    bestValue = -2000
     for move in legalMoves:
+        print(move)
+        print(legalMoves[move])
         if (legalMoves[move] > bestValue):
             bestMove = move
-    return bestMove
+            bestValue = legalMoves
+    """
+    bestMove = max(legalMoves.items(), key=operator.itemgetter(1))[0]
+    #print("bestMove: ", bestMove)
+    game.move(AIToken, bestMove)
+    return
+    #return bestMove
 
 def askPlayerForMove(game, player):
     while (True):
@@ -161,17 +201,20 @@ def game():
     game = TicTacToe(startingBoard)
     game.drawBoard()
     while (not gameOver):
-        askPlayerForMove(game, player)
-
-        if (game.checkWin() == True):
-        #Check for if game ended
-            game.drawBoard()
-            gameOver = True
+        if (player == 1):
+            askPlayerForMove(game, player)
+            player = 2
         else:
-            #Swap Player's Turns
-            if (player == 1): player = 2
-            else: player = 1
-            game.drawBoard()
+            print("AI's Turn: ")
+            AIMove(game)
+            player = 1
+        game.drawBoard()
+
+        #Check for if game ended
+        if (game.checkWin(player)):
+            print("check")
+            gameOver = True
+
 
 if __name__ == '__main__':
     game()
