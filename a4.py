@@ -114,15 +114,14 @@ def AIMove(game):
 
     humanToken = 1
     AIToken = 2
-    #Heuristic Values
     numPlayouts = 2500
     win = 5
     tie = 4
     lose = -5
     #Do random playouts for each of the legal moves to determine the optimal move
     for move in legalMoves:
-        copyGame = copy.deepcopy(game)
         #print("-----------MOVE: %d---------" %(move))
+        copyGame = copy.deepcopy(game)
         copyGame.move(AIToken, move)
         copyMoves = copy.deepcopy(movesArr)
         copyMoves.remove(move)
