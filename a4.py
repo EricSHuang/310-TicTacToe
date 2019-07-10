@@ -31,7 +31,10 @@ class TicTacToe:
     def move(self, player, place):
         """Places the player's token in the place specified if the place is empty.
         Returns true if move is legal, false otherwise."""
-        if (self.boardState[place] != 0):
+        if (place > len(self.boardState)):
+            #Place outside of grid. (illegal move)
+            return False
+        elif (self.boardState[place] != 0):
             #Place is already occupied. (illegal move)
             return False
         else:
@@ -103,90 +106,64 @@ def AIMove(game):
     """Computer makes its move using Monte-Carlo Tree Search"""
     #Make a list of all legal moves
     legalMoves = {}
-    movesArr = []       #TODO: figure out if alg is do-able without this variable
+    movesArr = []
     for i in range(len(game.boardState)):
         if (game.boardState[i] == 0):
             legalMoves[i] = 0
             movesArr.append(i)
 
-
-    copyGame = copy.deepcopy(game)
+    humanToken = 1
+    AIToken = 2
     #Heuristic Values
     numPlayouts = 2500
-    AIToken = 2
     win = 5
     tie = 4
     lose = -5
     #Do random playouts for each of the legal moves to determine the optimal move
     for move in legalMoves:
-        moveGame = copy.deepcopy(copyGame)
+        copyGame = copy.deepcopy(game)
         #print("-----------MOVE: %d---------" %(move))
-        moveGame.move(AIToken, move)     #TODO: check this line for correctness later
-        tempMoves1 = copy.deepcopy(movesArr)   #TODO: think of better name for this var
-        tempMoves1.remove(move)
+        copyGame.move(AIToken, move)
+        copyMoves = copy.deepcopy(movesArr)
+        copyMoves.remove(move)
 
         for i in range(0, numPlayouts):
-            randomGame = copy.deepcopy(moveGame)
-            """
-            print(moveGame.boardState)
-            print("random: ")
-            randomGame.drawBoard()
-            print("move:")
-            moveGame.drawBoard()
-            print("copy: ")
-            copyGame.drawBoard()
-            print("original: ")
-            game.drawBoard()
-            """
-            tempMoves = copy.deepcopy(tempMoves1)
+            randomGame = copy.deepcopy(copyGame)
+            randomMoves = copy.deepcopy(copyMoves)
             testGameOver = False
             turn = 1
-            while (testGameOver == False):
+            while (testGameOver == False and len(randomMoves) > 0):
                 if (turn % 2 == 1):
-                    #random human choice
-                    randomHuman = random.choice(tempMoves)
-                    randomGame.move(1, randomHuman)
-                    tempMoves.remove(randomHuman)
+                    #random human move
+                    randomHuman = random.choice(randomMoves)
+                    randomGame.move(humanToken, randomHuman)
+                    randomMoves.remove(randomHuman)
                 else:
-                    #random AI choice
-                    randomAI = random.choice(tempMoves)
-                    randomGame.move(2, randomAI)
-                    tempMoves.remove(randomAI)
+                    #random AI move
+                    randomAI = random.choice(randomMoves)
+                    randomGame.move(AIToken, randomAI)
+                    randomMoves.remove(randomAI)
 
                 #check if game is over
                 gameState = randomGame.checkCompWin()
                 #print("gameState: %d" %(gameState))
                 #randomGame.drawBoard()
-                #print(tempMoves)
-                if (gameState == 0):
+                if (gameState == 0):  #game not over yet
                     turn += 1
                 else:
-                    #TODO: check this too
+                    #Update values of move
                     if (gameState == 1): legalMoves[move] += win
                     elif (gameState == 2): legalMoves[move] += lose
                     else: legalMoves[move] += tie
-                    #print("got here \n")
                     testGameOver = True
                     break
 
-    print(legalMoves)
     #Choose the optimal move
-    #TODO: THIS IS JUST PSEUDO CODE FOR NOW
-    """
-    bestMove = 0
-    bestValue = -2000
-    for move in legalMoves:
-        print(move)
-        print(legalMoves[move])
-        if (legalMoves[move] > bestValue):
-            bestMove = move
-            bestValue = legalMoves
-    """
     bestMove = max(legalMoves.items(), key=operator.itemgetter(1))[0]
-    #print("bestMove: ", bestMove)
     game.move(AIToken, bestMove)
+    #print(legalMoves)
+    #print("bestMove: ", bestMove)
     return
-    #return bestMove
 
 def askPlayerForMove(game, player):
     while (True):
@@ -197,27 +174,47 @@ def askPlayerForMove(game, player):
             print("Sorry, that was an illegal move. Please try again.")
 
 def game():
+    """TicTacToe Game"""
+    #Instructions
+    print("Instructions: ")
+    print("The game board has indexes as follows:")
+    print("0 | 1 | 2")
+    print("----------")
+    print("3 | 4 | 5")
+    print("----------")
+    print("6 | 7 | 8")
+    print("When prompted, respond with the index where you want to place your piece.")
+    while(True):
+        playerFirst = input("Would you like to go first? (y/n)")
+        if (playerFirst == "y"):
+            player = 1
+            break
+        elif (playerFirst == "n"):
+            player = 2
+            break
+        else: print("Sorry, that wasn't a proper response. Please try again.")
+
     gameOver = False
-    player = 1
     startingBoard = [0, 0, 0, 0, 0, 0, 0, 0, 0]
     game = TicTacToe(startingBoard)
     game.drawBoard()
+    #Game Loop
     while (not gameOver):
-        #Check for if game ended
-        if (game.checkWin(player)):
-            print("check")
-            gameOver = True
-            break
-
         if (player == 1):
             askPlayerForMove(game, player)
-            player = 2
         else:
             print("AI's Turn: ")
             AIMove(game)
-            player = 1
         game.drawBoard()
 
+        #Check for if game ended
+        if (game.checkWin(player)):
+            gameOver = True
+            break
+        else:
+            if (player == 1): player = 2
+            else: player = 1
+    return
 
 if __name__ == '__main__':
     game()
