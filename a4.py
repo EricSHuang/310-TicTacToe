@@ -13,7 +13,7 @@ class TicTacToe:
     def setBoardState(self, boardState):
         self.boardState = boardState
 
-    def convert(num):
+    def convert(self, num):
         """Helper Function for drawBoard()"""
         if (num == 0): return "   "
         elif (num == 1 ): return " O "
@@ -23,8 +23,8 @@ class TicTacToe:
         boardState = self.boardState
         horizontalBar = "-----------"
         for i in range(3):
-            print("%s|%s|%s" %(TicTacToe.convert(boardState[i*3]),
-                TicTacToe.convert(boardState[i*3+1]), TicTacToe.convert(boardState[i*3+2])))
+            print("%s|%s|%s" %(self.convert(boardState[i*3]),
+                self.convert(boardState[i*3+1]), self.convert(boardState[i*3+2])))
             if (i != 2):    #don't print the bar on the last line
                 print(horizontalBar)
 
